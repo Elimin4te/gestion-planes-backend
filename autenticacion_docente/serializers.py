@@ -9,8 +9,8 @@ class SerializadorInicioSesion(serializers.Serializer):
         max_length=20,
         validators=[
             RegexValidator(
-                regex=r"^[V|E|P]-\d{7,8}$",
-                message="Ingrese una cédula venezolana válida (Ej: V-12345678, E-12345678, P-12345678)",
+                regex=r"^[V]-\d{7,8}$",
+                message="Ingrese una cédula venezolana válida (Ej: V-12345678)",
                 code="cedula_invalida"
             )   
         ]

@@ -36,6 +36,9 @@ class UnidadCurricular(models.Model):
     )
     nombre = models.CharField(max_length=32)
 
+    class Meta:
+        db_table = 'unidades_curriculares'
+
     def __str__(self):
         return self.nombre
 
@@ -65,6 +68,9 @@ class PlanAprendizaje(models.Model):
     pnf = models.CharField(max_length=32)
     fecha_creacion = models.DateTimeField(default=now)
     fecha_modificacion = models.DateTimeField(null=True)
+
+    class Meta:
+        db_table = 'plan_de_aprendizaje'
 
     def __str__(self):
         return f"Plan de {self.unidad_curricular.nombre} ({self.docente.nombre})"
@@ -104,6 +110,9 @@ class ObjetivoPlanAprendizaje(models.Model):
         ]
     )
 
+    class Meta:
+        db_table = 'objetivos_plan_de_aprendizaje'
+
     def __str__(self):
         return self.titulo
 
@@ -117,6 +126,9 @@ class PlanEvaluacion(models.Model):
 
     # Relación 1:1 con Plan de Aprendizaje
     plan_aprendizaje = models.OneToOneField(PlanAprendizaje, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'planes_de_evaluacion'
 
     def __str__(self):
         return self.nombre
@@ -185,6 +197,9 @@ class ItemPlanEvaluacion(models.Model):
     habilidades_a_evaluar = models.TextField()
     peso = models.SmallIntegerField(choices=OPCIONES_PESO_EVALUACION, default=15)
     fecha_planificada = models.DateField()
+
+    class Meta:
+        db_table = 'items_plan_de_evaluacion'
 
     def __str__(self):
         return f"Item de {self.plan_evaluacion.nombre}"

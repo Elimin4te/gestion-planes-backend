@@ -34,6 +34,16 @@ ALLOWED_HOSTS = []
 # Constantes especificas de funcionalidades
 NOMBRE_COOKIE_DOCENTE = 'cedula_docente'
 
+# Configuraciones DRF
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer'
+    ],
+    'DEFAULT_PERMISSION_CLASSES': (
+        'autenticacion_docente.permissions.CedulaRequerida',  # Valida la cedula por defecto para todas las vistas.
+    ),
+}
 
 # Application definition
 
@@ -44,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'autenticacion_docente',
     'gestion_planes'
 ]
