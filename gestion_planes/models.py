@@ -1,4 +1,5 @@
 from typing import Iterable
+from datetime import date
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -75,6 +76,27 @@ class PlanAprendizaje(models.Model):
     def __str__(self):
         return f"Plan de {self.unidad_curricular.nombre} ({self.docente.nombre})"
 
+    def añadir_objetivo(
+        self,
+        titulo: str,
+        contenido: str,
+        criterio_logro: str,
+        estrategia_didactica: str,
+        duracion_horas: int
+    ) -> "ObjetivoPlanAprendizaje":
+        """Añade un nuevo objetivo al plan de aprendizaje."""
+
+        objetivo = ObjetivoPlanAprendizaje.objects.create(
+            plan_aprendizaje=self,
+            titulo=titulo,
+            contenido=contenido,
+            criterio_logro=criterio_logro,
+            estrategia_didactica=estrategia_didactica,
+            duracion_horas=duracion_horas
+        )
+
+        return objetivo
+
 
 OPCIONES_ESTRATEGIAS_DIDACTICAS = [
     ('CL', 'Clase magistral'),
@@ -133,19 +155,28 @@ class PlanEvaluacion(models.Model):
     def __str__(self):
         return self.nombre
 
-    def clean(self):
-        super().clean()
-        self.validar_suma_pesos()
+    def añadir_item_evaluacion(
+        self,
+        instrumento_evaluacion: str,
+        tipo_evaluacion: str,
+        habilidades_a_evaluar: str,
+        peso: int,
+        objetivo_asociado: ObjetivoPlanAprendizaje,
+        fecha_planificada: date
+    ) -> "ItemPlanEvaluacion":
+        """Añade un nuevo ítem al plan de evaluación."""
 
-    def validar_suma_pesos(self):
-        """Valida que la suma de los pesos de los ítems no exceda el 100%."""
-        items: Iterable[ItemPlanEvaluacion] = self.itemplanevaluacion_set.all()  # Obtiene todos los ítems del plan de evaluación
-        suma_pesos = sum(item.peso for item in items)
+        item = ItemPlanEvaluacion.objects.create(
+            plan_evaluacion=self,
+            instrumento_evaluacion=instrumento_evaluacion,
+            tipo_evaluacion=tipo_evaluacion,
+            habilidades_a_evaluar=habilidades_a_evaluar,
+            peso=peso,
+            objetivo_asociado=objetivo_asociado,
+            fecha_planificada=fecha_planificada
+        )
 
-        if suma_pesos > 100:
-            raise ValidationError(
-                "La suma de los pesos de los ítems no puede exceder el 100%."
-            )
+        return item
 
 
 OPCIONES_INSTRUMENTOS_EVALUACION = [
@@ -204,3 +235,19 @@ class ItemPlanEvaluacion(models.Model):
 
     def __str__(self):
         return f"Item de {self.plan_evaluacion.nombre}"
+
+    def clean(self):
+        super().clean()
+        self.validar_suma_pesos()
+
+    def validar_suma_pesos(self):
+        """Valida que la suma de los pesos de los ítems no exceda el 100%."""
+
+        # Obtiene todos los ítems del plan de evaluación
+        items: Iterable[ItemPlanEvaluacion] = ObjetivoPlanAprendizaje.objects.filter(plan_evaluacion=self.plan_evaluacion)
+        suma_pesos = sum(item.peso for item in items)
+
+        if suma_pesos > 100:
+            raise ValidationError(
+                "La suma de los pesos de los ítems no puede exceder el 100%."
+            )
