@@ -76,10 +76,10 @@ class PlanAprendizaje(models.Model):
     def __str__(self):
         return f"Plan de {self.unidad_curricular.nombre} ({self.docente.nombre})"
 
-    def save(self, force_insert: bool = ..., force_update: bool = ..., using: Optional[str] = ..., update_fields: Optional[Iterable[str]] = ...) -> None:
+    def save(self, *args, **kwargs) -> None:
         # Actualiza fecha de modificación
         self.fecha_modificacion = now()
-        return super().save(force_insert, force_update, using, update_fields)
+        return super().save(*args, **kwargs)
 
     def añadir_objetivo(
         self,
@@ -166,10 +166,10 @@ class PlanEvaluacion(models.Model):
     def __str__(self):
         return self.nombre
 
-    def save(self, force_insert: bool = ..., force_update: bool = ..., using: Optional[str] = ..., update_fields: Optional[Iterable[str]] = ...) -> None:
+    def save(self, *args, **kwargs) -> None:
         # Actualiza fecha de modificación
         self.fecha_modificacion = now()
-        return super().save(force_insert, force_update, using, update_fields)
+        return super().save(*args, **kwargs)
 
     def añadir_item_evaluacion(
         self,
