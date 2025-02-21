@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Optional
 from datetime import date
 
 from django.db import models
@@ -71,10 +71,15 @@ class PlanAprendizaje(models.Model):
     fecha_modificacion = models.DateTimeField(null=True)
 
     class Meta:
-        db_table = 'plan_de_aprendizaje'
+        db_table = 'planes_de_aprendizaje'
 
     def __str__(self):
         return f"Plan de {self.unidad_curricular.nombre} ({self.docente.nombre})"
+
+    def save(self, force_insert: bool = ..., force_update: bool = ..., using: Optional[str] = ..., update_fields: Optional[Iterable[str]] = ...) -> None:
+        # Actualiza fecha de modificación
+        self.fecha_modificacion = now()
+        return super().save(force_insert, force_update, using, update_fields)
 
     def añadir_objetivo(
         self,
@@ -138,6 +143,12 @@ class ObjetivoPlanAprendizaje(models.Model):
     def __str__(self):
         return self.titulo
 
+    def clean(self) -> None:
+        # Asignar fecha de modificación de plan de aprendizaje.
+        self.plan_aprendizaje.fecha_modificacion = now()
+        self.plan_aprendizaje.save()
+        return super().clean()
+
 
 class PlanEvaluacion(models.Model):
     """Modelo de plan de evaluación."""
@@ -154,6 +165,11 @@ class PlanEvaluacion(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def save(self, force_insert: bool = ..., force_update: bool = ..., using: Optional[str] = ..., update_fields: Optional[Iterable[str]] = ...) -> None:
+        # Actualiza fecha de modificación
+        self.fecha_modificacion = now()
+        return super().save(force_insert, force_update, using, update_fields)
 
     def añadir_item_evaluacion(
         self,
@@ -239,6 +255,10 @@ class ItemPlanEvaluacion(models.Model):
     def clean(self):
         super().clean()
         self.validar_suma_pesos()
+
+        # Asignar fecha de modificación de plan de evaluación.
+        self.plan_evaluacion.fecha_modificacion = now()
+        self.plan_evaluacion.save()
 
     def validar_suma_pesos(self):
         """Valida que la suma de los pesos de los ítems no exceda el 100%."""

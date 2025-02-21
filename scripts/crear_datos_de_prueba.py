@@ -48,42 +48,42 @@ def run():
     # Crear objetivos de plan de aprendizaje
     objetivos_data = [
         {
-            "titulo": "Comprender los fundamentos de la lógica proposicional",
+            "titulo": "Lógica proposicional",
             "contenido": "Introducción a la lógica proposicional y sus aplicaciones.",
             "criterio_logro": "El estudiante podrá resolver problemas de lógica proposicional.",
             "estrategia_didactica": "CL",
             "duracion_horas": 20,
         },
         {
-            "titulo": "Aplicar las reglas de inferencia",
+            "titulo": "Reglas de inferencia",
             "contenido": "Reglas de inferencia y su uso en la demostración de argumentos.",
             "criterio_logro": "El estudiante podrá demostrar la validez de argumentos utilizando reglas de inferencia.",
             "estrategia_didactica": "AP",
             "duracion_horas": 25,
         },
         {
-            "titulo": "Analizar conjuntos y relaciones",
+            "titulo": "Conjuntos y Relaciones",
             "contenido": "Teoría de conjuntos, relaciones y funciones.",
             "criterio_logro": "El estudiante podrá realizar operaciones con conjuntos y relaciones.",
             "estrategia_didactica": "TR",
             "duracion_horas": 15,
         },
         {
-            "titulo": "Utilizar funciones y grafos",
+            "titulo": "Funciones y Grafos",
             "contenido": "Funciones, grafos y sus aplicaciones.",
             "criterio_logro": "El estudiante podrá resolver problemas utilizando funciones y grafos.",
             "estrategia_didactica": "EP",
             "duracion_horas": 20,
         },
         {
-            "titulo": "Resolver problemas de conteo",
+            "titulo": "Problemas de conteo",
             "contenido": "Técnicas de conteo y probabilidad.",
             "criterio_logro": "El estudiante podrá resolver problemas de conteo y probabilidad.",
             "estrategia_didactica": "TA",
             "duracion_horas": 10,
         },
         {
-            "titulo": "Introducción a la teoría de números",
+            "titulo": "Teoría de números",
             "contenido": "Conceptos básicos de la teoría de números.",
             "criterio_logro": "El estudiante podrá aplicar los conceptos básicos de la teoría de números.",
             "estrategia_didactica": "EX",
@@ -101,7 +101,7 @@ def run():
     # Crear plan de evaluación
     plan_evaluacion = PlanEvaluacion.objects.create(
         plan_aprendizaje=plan_aprendizaje,
-        nombre=f"Plan de Evaluación - {unidad_curricular.nombre} - {plan_aprendizaje.codigo_grupo}",
+        nombre=f"Plan de Evaluación {plan_aprendizaje.codigo_grupo}",
     )
 
     # Crear items de plan de evaluación (sumando 100% en peso)
