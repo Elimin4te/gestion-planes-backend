@@ -196,6 +196,7 @@ class ItemPlanEvaluacion(models.Model):
     tipo_evaluacion = models.CharField(max_length=4, choices=OPCIONES_TIPO_EVALUACION, default='FO')
     habilidades_a_evaluar = models.TextField()
     peso = models.SmallIntegerField(choices=OPCIONES_PESO_EVALUACION, default=15)
+    objetivo_asociado = models.OneToOneField(ObjetivoPlanAprendizaje, on_delete=models.CASCADE, default=None)
     fecha_planificada = models.DateField()
 
     class Meta:
