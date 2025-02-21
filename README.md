@@ -1,4 +1,3 @@
-```markdown
 # Gestión de Planes UNEXCA
 
 Este proyecto tiene como objetivo desarrollar un sistema para la gestión de planes académicos en la **Universidad Nacional Experimental de la Gran Caracas (UNEXCA)**. El sistema permitirá la creación, modificación y consulta de planes de aprendizaje y evaluación, así como la generación de reportes en formato PDF.
@@ -10,14 +9,14 @@ Para instalar el sistema, sigue los siguientes pasos:
 1.  **Clonar el repositorio:**
 
 ```bash
-git clone https://[https://github.com/borkdude/html/blob/main/.dir-locals.el](https://github.com/borkdude/html/blob/main/.dir-locals.el)
+git clone https://github.com/Elimin4te/gestion-planes-backend.git
 ```
 
 2.  **Crear un entorno virtual (recomendado):**
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv gestion_planes
+source gestion_planes/bin/activate
 ```
 
 3.  **Instalar las dependencias:**
