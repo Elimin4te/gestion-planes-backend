@@ -56,9 +56,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'rest_framework',
+    'drf_spectacular',
     'autenticacion_docente',
     'gestion_planes'
 ]
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Gestión de Planes',
+    'DESCRIPTION': 'API para crear y listar los distintos planes de evaluación y aprendizaje.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
