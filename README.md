@@ -81,12 +81,12 @@ python manage.py runscript limpiar_bd
 
 Puedes acceder a la documentación de la API a través de la siguiente URL (asumiendo que el proyecto está corriendo en localhost con el puerto 8000):
 ```
-[http://127.0.0.1:8000/api/schema/swagger-ui/]
+[http://127.0.0.1:8000/esquema-api/swagger-ui/]
 ```
 
 o
 ```
-http://localhost:8000/api/schema/swagger-ui/
+http://localhost:8000/esquema-api/swagger-ui/
 ```
 
 Esta documentación te permitirá explorar los endpoints disponibles, los tipos de datos que aceptan y devuelven, y realizar pruebas directamente desde el navegador.
