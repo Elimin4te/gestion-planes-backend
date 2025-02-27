@@ -19,10 +19,12 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from autenticacion_docente import urls as ad_urls
+from gestion_planes import urls as gp_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('autenticacion-docente/', include(ad_urls.urlpatterns)),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('gestion-planes/', include(gp_urls.urlpatterns)),
+    path('esquema-api/', SpectacularAPIView.as_view(), name='esquema'),
+    path('esquema-api/swagger-ui/', SpectacularSwaggerView.as_view(url_name='esquema'), name='swagger-ui'),
 ]
