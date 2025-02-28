@@ -29,7 +29,10 @@ SECRET_KEY = 'django-insecure-fgs1_6+6y9pdwl7)tdm^79%wr)kbg8hhwhjxr826h2m!5n!t)b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv("MODO_DESARROLLO")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost'
+]
 
 # Constantes especificas de funcionalidades
 NOMBRE_COOKIE_DOCENTE = 'cedula_docente'
