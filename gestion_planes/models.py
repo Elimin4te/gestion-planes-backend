@@ -122,33 +122,6 @@ OPCIONES_ESTRATEGIAS_DIDACTICAS = [
     ('OT', 'Otras'),
 ]
 
-class ObjetivoPlanAprendizaje(models.Model):
-    """Modelo de objetivos de plan de aprendizaje."""
-
-    plan_aprendizaje = models.ForeignKey(PlanAprendizaje, on_delete=models.CASCADE)
-    titulo = models.CharField(max_length=32)
-    contenido = models.TextField()
-    criterio_logro = models.TextField()
-    estrategia_didactica = models.CharField(max_length=4, choices=OPCIONES_ESTRATEGIAS_DIDACTICAS, default='CL')
-    duracion_horas = models.SmallIntegerField(
-        validators=[
-            MinValueValidator(10, "Las horas de duración no pueden ser menores a 10."),
-            MaxValueValidator(200, "Las horas de duración no pueden ser mayores a 200.")
-        ]
-    )
-
-    class Meta:
-        db_table = 'objetivos_plan_de_aprendizaje'
-
-    def __str__(self):
-        return self.titulo
-
-    def clean(self) -> None:
-        # Asignar fecha de modificación de plan de aprendizaje.
-        self.plan_aprendizaje.fecha_modificacion = now()
-        self.plan_aprendizaje.save()
-        return super().clean()
-
 
 class PlanEvaluacion(models.Model):
     """Modelo de plan de evaluación."""
@@ -177,7 +150,7 @@ class PlanEvaluacion(models.Model):
         tipo_evaluacion: str,
         habilidades_a_evaluar: str,
         peso: int,
-        objetivo_asociado: ObjetivoPlanAprendizaje,
+        objetivo_asociado: "ObjetivoPlanAprendizaje",
         fecha_planificada: date
     ) -> "ItemPlanEvaluacion":
         """Añade un nuevo ítem al plan de evaluación."""
@@ -243,7 +216,6 @@ class ItemPlanEvaluacion(models.Model):
     tipo_evaluacion = models.CharField(max_length=4, choices=OPCIONES_TIPO_EVALUACION, default='FO')
     habilidades_a_evaluar = models.TextField()
     peso = models.SmallIntegerField(choices=OPCIONES_PESO_EVALUACION, default=15)
-    objetivo_asociado = models.OneToOneField(ObjetivoPlanAprendizaje, on_delete=models.CASCADE, default=None)
     fecha_planificada = models.DateField()
 
     class Meta:
@@ -264,10 +236,39 @@ class ItemPlanEvaluacion(models.Model):
         """Valida que la suma de los pesos de los ítems no exceda el 100%."""
 
         # Obtiene todos los ítems del plan de evaluación
-        items: Iterable[ItemPlanEvaluacion] = ObjetivoPlanAprendizaje.objects.filter(plan_evaluacion=self.plan_evaluacion)
+        items: Iterable[ItemPlanEvaluacion] = ItemPlanEvaluacion.objects.filter(plan_evaluacion=self.plan_evaluacion)
         suma_pesos = sum(item.peso for item in items)
 
         if suma_pesos > 100:
             raise ValidationError(
                 "La suma de los pesos de los ítems no puede exceder el 100%."
             )
+
+
+class ObjetivoPlanAprendizaje(models.Model):
+    """Modelo de objetivos de plan de aprendizaje."""
+
+    plan_aprendizaje = models.ForeignKey(PlanAprendizaje, on_delete=models.CASCADE)
+    titulo = models.CharField(max_length=32)
+    contenido = models.TextField()
+    criterio_logro = models.TextField()
+    estrategia_didactica = models.CharField(max_length=4, choices=OPCIONES_ESTRATEGIAS_DIDACTICAS, default='CL')
+    duracion_horas = models.SmallIntegerField(
+        validators=[
+            MinValueValidator(10, "Las horas de duración no pueden ser menores a 10."),
+            MaxValueValidator(200, "Las horas de duración no pueden ser mayores a 200.")
+        ]
+    )
+    evaluacion_asociada = models.ForeignKey(ItemPlanEvaluacion, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        db_table = 'objetivos_plan_de_aprendizaje'
+
+    def __str__(self):
+        return self.titulo
+
+    def clean(self) -> None:
+        # Asignar fecha de modificación de plan de aprendizaje.
+        self.plan_aprendizaje.fecha_modificacion = now()
+        self.plan_aprendizaje.save()
+        return super().clean()
