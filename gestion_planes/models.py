@@ -222,7 +222,7 @@ class ItemPlanEvaluacion(models.Model):
         db_table = 'items_plan_de_evaluacion'
 
     def __str__(self):
-        return f"Item de {self.plan_evaluacion.nombre}"
+        return f"{self.tipo_evaluacion}-{self.instrumento_evaluacion} {self.peso}% ({self.plan_evaluacion.nombre})"
 
     def clean(self):
         super().clean()

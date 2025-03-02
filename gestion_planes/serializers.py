@@ -28,8 +28,8 @@ class SerializadorObjetivoPlanAprendizaje(serializers.ModelSerializer):
 
 
 class SerializadorPlanAprendizaje(serializers.ModelSerializer):
-    docente = SerializadorDocente(read_only=True)
-    unidad_curricular = SerializadorUnidadCurricular(read_only=True)
+    docente = serializers.PrimaryKeyRelatedField(queryset=Docente.objects.all())
+    unidad_curricular = serializers.PrimaryKeyRelatedField(queryset=UnidadCurricular.objects.all())
     objetivos_plan_aprendizaje = SerializadorObjetivoPlanAprendizaje(many=True, read_only=True, source='objetivoplanaprendizaje_set')
 
     class Meta:
@@ -38,15 +38,14 @@ class SerializadorPlanAprendizaje(serializers.ModelSerializer):
 
 
 class SerializadorItemPlanEvaluacion(serializers.ModelSerializer):
-    objetivo_asociado = SerializadorObjetivoPlanAprendizaje(read_only=True)
-
+    objetivos_asociados = SerializadorObjetivoPlanAprendizaje(many=True, read_only=True, source='objetivoplanaprendizaje_set')
     class Meta:
         model = ItemPlanEvaluacion
         fields = '__all__'
 
 
 class SerializadorPlanEvaluacion(serializers.ModelSerializer):
-    plan_aprendizaje = SerializadorPlanAprendizaje(read_only=True)
+    plan_aprendizaje = serializers.PrimaryKeyRelatedField(queryset=PlanAprendizaje.objects.all())
     items_plan_evaluacion = SerializadorItemPlanEvaluacion(many=True, read_only=True, source='itemplanevaluacion_set')
 
     class Meta:

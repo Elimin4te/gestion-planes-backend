@@ -51,11 +51,6 @@ class CrearListarObjetivoPlanAprendizaje(generics.ListCreateAPIView):
         docente = Docente.objects.get(cedula=cedula)
         return ObjetivoPlanAprendizaje.objects.filter(plan_aprendizaje__docente=docente)
 
-    def perform_create(self, serializer):
-        cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
-        docente = Docente.objects.get(cedula=cedula)
-        plan_aprendizaje = PlanAprendizaje.objects.get(pk=self.kwargs['plan_aprendizaje_pk'], docente=docente)
-        serializer.save(plan_aprendizaje=plan_aprendizaje)
 
 class ObtenerActualizarEliminarObjetivoPlanAprendizaje(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SerializadorObjetivoPlanAprendizaje
@@ -65,6 +60,7 @@ class ObtenerActualizarEliminarObjetivoPlanAprendizaje(generics.RetrieveUpdateDe
         cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
         docente = Docente.objects.get(cedula=cedula)
         return ObjetivoPlanAprendizaje.objects.filter(plan_aprendizaje__docente=docente)
+
 
 # Vistas para PlanEvaluacion (limitadas por docente a través de PlanAprendizaje)
 class CrearListarPlanEvaluacion(generics.ListCreateAPIView):
@@ -76,11 +72,6 @@ class CrearListarPlanEvaluacion(generics.ListCreateAPIView):
         docente = Docente.objects.get(cedula=cedula)
         return PlanEvaluacion.objects.filter(plan_aprendizaje__docente=docente)
 
-    def perform_create(self, serializer):
-        cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
-        docente = Docente.objects.get(cedula=cedula)
-        plan_aprendizaje = PlanAprendizaje.objects.get(pk=self.kwargs['plan_aprendizaje_pk'], docente=docente)
-        serializer.save(plan_aprendizaje=plan_aprendizaje)
 
 class ObtenerActualizarEliminarPlanEvaluacion(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SerializadorPlanEvaluacion
@@ -101,11 +92,6 @@ class CrearListarItemPlanEvaluacion(generics.ListCreateAPIView):
         docente = Docente.objects.get(cedula=cedula)
         return ItemPlanEvaluacion.objects.filter(plan_evaluacion__plan_aprendizaje__docente=docente)
 
-    def perform_create(self, serializer):
-        cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
-        docente = Docente.objects.get(cedula=cedula)
-        plan_evaluacion = PlanEvaluacion.objects.get(pk=self.kwargs['plan_evaluacion_pk'], plan_aprendizaje__docente=docente)
-        serializer.save(plan_evaluacion=plan_evaluacion)
 
 class ObtenerActualizarEliminarItemPlanEvaluacion(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SerializadorItemPlanEvaluacion
@@ -120,6 +106,7 @@ class ObtenerActualizarEliminarItemPlanEvaluacion(generics.RetrieveUpdateDestroy
 class CrearListarUnidadCurricular(generics.ListCreateAPIView):
     queryset = UnidadCurricular.objects.all()
     serializer_class = SerializadorUnidadCurricular
+
 
 class ObtenerActualizarEliminarUnidadCurricular(generics.RetrieveUpdateDestroyAPIView):
     queryset = UnidadCurricular.objects.all()
