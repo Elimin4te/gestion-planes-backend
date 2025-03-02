@@ -41,7 +41,7 @@ class UnidadCurricular(models.Model):
         db_table = 'unidades_curriculares'
 
     def __str__(self):
-        return self.nombre
+        return f"{self.nombre} ({self.codigo})"
 
 
 OPCIONES_NUCLEO = [
@@ -74,7 +74,7 @@ class PlanAprendizaje(models.Model):
         db_table = 'planes_de_aprendizaje'
 
     def __str__(self):
-        return f"Plan de {self.unidad_curricular.nombre} por {self.docente.nombre} ({self.codigo_grupo})"
+        return f"P.A {self.unidad_curricular.nombre} por {self.docente.nombre_completo} ({self.codigo_grupo})"
 
     def save(self, *args, **kwargs) -> None:
         # Actualiza fecha de modificación
@@ -137,7 +137,7 @@ class PlanEvaluacion(models.Model):
         db_table = 'planes_de_evaluacion'
 
     def __str__(self):
-        return f"{self.nombre} ({self.plan_aprendizaje.codigo_grupo})"
+        return f"P.E {self.nombre} ({self.plan_aprendizaje.codigo_grupo})"
 
     def save(self, *args, **kwargs) -> None:
         # Actualiza fecha de modificación

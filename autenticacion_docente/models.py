@@ -29,3 +29,7 @@ class Docente(models.Model):
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
+
+    @property
+    def nombre_completo(self):
+        return f"{self.nombre} {self.apellido}"
