@@ -1,5 +1,7 @@
-from typing import Iterable
+from typing import Iterable, Any
 from datetime import date
+from math import ceil
+from pathlib import Path
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -15,48 +17,107 @@ from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.colors import black
 from io import BytesIO
 
-
-def ajustar_texto_pdf(texto: str, max_caracteres: int, max_lineas: int = 4, elipsis: bool = False) -> tuple[str]:
-    """Funcion para ajustar los textos a las columnas de los formatos pdf."""
-    if len(texto) > max_caracteres:
-        # Puntos suspensivos si el texto es muy largo.
-        if elipsis:
-            texto = texto[:max_caracteres]
-            texto = texto[:-3] + '...'
-            return texto,
-
-        lineas = []
-        palabras = texto.split()
-        linea_actual = ""
-
-        for palabra in palabras:
-            if len(linea_actual) + len(palabra) + 1 <= max_caracteres:
-                if linea_actual:
-                    linea_actual += " " + palabra
-                else:
-                    linea_actual = palabra
-            else:
-                lineas.append(linea_actual)
-                linea_actual = palabra
-
-        if linea_actual:
-            lineas.append(linea_actual)
-
-        if len(lineas) > max_lineas:
-            for i in range(3):
-                lineas[-1] = lineas[-1][:-3] + '...'
-
-        return lineas
-
-    else:
-        return texto,
+from .utils import dibujar_multi_linea, ajustar_texto_pdf
 
 
-def dibujar_multi_linea(lienzo: canvas.Canvas, lineas: tuple[str], x: int, y: int, interlinea: int = 12):
-    """Escribe multiples lineas en el PDF."""
-    for linea in lineas:
-        lienzo.drawString(x, y, linea)
-        y -= interlinea
+class ExportablePDFMixin:
+    """ Clase abstracta que sirve como base para definir como se genera un pdf en una entidad que se puede exportar. """
+
+    @property
+    def plantilla_para_pdf(self) -> Path:
+        """ Ubicación de la plantilla. """
+        return settings.BASE_DIR / "gestion_planes" / "pdfs" / f"{self.__class__.__name__.lower()}.pdf"
+
+    @property
+    def maximo_objetos_por_pagina(self):
+        """ La cantidad máxima de objetivos que pueden haber en una página del PDF. """
+        return 6
+
+    @property
+    def desviacion_y(self):
+        """Define la cantidad de pixeles de desviacion Y del contenido."""
+        return 0
+
+    def escribir_encabezado(self, lienzo: canvas.Canvas):
+        """Escribe la información del PNF, núcleo, docente y UC en el pdf.
+        
+        Se deben definir 5 propiedades en el modelo para este metodo:
+        - nombre_pnf
+        - nombre_nucleo
+        - nombre_turno
+        - nombre_uc
+        - nombre_docente
+        """
+
+        # Escribir la información en las coordenadas de la plantilla
+        lienzo.drawString(115, 506 + self.desviacion_y, self.nombre_pnf)  # Programa
+        lienzo.drawString(330, 506 + self.desviacion_y, self.nombre_nucleo)  # Núcleo
+        lienzo.drawString(550, 506 + self.desviacion_y, self.nombre_turno)  # Horario
+
+        lienzo.drawString(165, 485 + self.desviacion_y, self.nombre_uc)  # Unidad Curricular
+        lienzo.drawString(530, 485 + self.desviacion_y, self.nombre_docente)  # Profesor(a)
+
+        # Fecha de Modificación (o Creación) del Plan
+        lienzo.drawString(50, 30 + self.desviacion_y, (self.fecha_modificacion or self.fecha_creacion).strftime('%d/%m/%Y'))
+
+
+    def llenar_tabla(self, lienzo: canvas.Canvas, datos: tuple[int, Any]):
+        """Función sobrescribible donde se define la lógica para llenar la tabla de información."""
+        ...
+
+    def generar_pagina(self, datos: tuple[int, Any]):
+        """Función donde se define la lógica para generar una página."""
+        # Objeto de pagina base
+        plantilla = PdfReader(self.plantilla_para_pdf).pages[0] 
+
+        # Crear un nuevo PDF en memoria
+        buffer = BytesIO()
+        lienzo = canvas.Canvas(buffer, pagesize=landscape(letter))
+        lienzo.setFont("Helvetica", 11)
+
+        # Escribir la información encabezado
+        self.escribir_encabezado(lienzo)
+
+        lienzo.setFillColor(black)
+
+        # Llenado de tabla
+        self.llenar_tabla(lienzo, datos)
+
+        # Guardar el PDF en memoria
+        lienzo.save()
+        buffer.seek(0)
+
+        # Combinar la plantilla PDF con la información escrita
+        nuevo_pdf_buffer = BytesIO(buffer.getvalue()) # Creamos un nuevo buffer a partir del valor del anterior.
+        nuevo_pdf = PdfReader(nuevo_pdf_buffer)
+        plantilla.merge_page(nuevo_pdf.pages[0])
+
+        return plantilla
+
+    def generar_pdf(self):
+        """Genera las páginas del archivo y devuelve el buffer de bytes final."""
+
+        # Crear el flujo de salida con el PDF combinado
+        salida = PdfWriter()
+        items = self.obtener_items_pdf()
+
+        # Se dividen los objetivos según la cantidad máxima de entradas por PDF
+        paginas_requeridas = ceil(len(items) / self.maximo_objetos_por_pagina)
+        partes = tuple([items[i:self.maximo_objetos_por_pagina] for i in range(0, paginas_requeridas)])
+
+        # Se generan las paginas para cada parte y se agregan a la salida
+        for parte in partes:
+            salida.add_page(self.generar_pagina(enumerate(parte, 1)))
+
+        flujo_salida = BytesIO()
+        salida.write(flujo_salida)
+        flujo_salida.seek(0)
+
+        return flujo_salida
+
+    def obtener_items_pdf(self) -> tuple[Any]:
+        """Función sobrescribible donde se debe declarar el set de datos origen para el pdf."""
+        ...
 
 
 OPCIONES_TRAYECTO = [
@@ -109,7 +170,7 @@ OPCIONES_TURNO = [
 ]
 
 
-class PlanAprendizaje(models.Model):
+class PlanAprendizaje(models.Model, ExportablePDFMixin):
     """Modelo de plan de aprendizaje."""
 
     codigo_grupo = models.CharField(max_length=24, primary_key=True)
@@ -120,6 +181,26 @@ class PlanAprendizaje(models.Model):
     pnf = models.CharField(max_length=32)
     fecha_creacion = models.DateTimeField(default=now)
     fecha_modificacion = models.DateTimeField(null=True)
+
+    @property
+    def nombre_pnf(self) -> str:
+        return self.pnf
+
+    @property
+    def nombre_nucleo(self) -> str:
+        return self.get_nucleo_display()
+
+    @property
+    def nombre_turno(self) -> str:
+        return self.get_turno_display()
+
+    @property
+    def nombre_uc(self) -> str:
+        return self.unidad_curricular.nombre
+
+    @property
+    def nombre_docente(self) -> str:
+        return self.docente.nombre_completo
 
     class Meta:
         db_table = 'planes_de_aprendizaje'
@@ -153,57 +234,20 @@ class PlanAprendizaje(models.Model):
 
         return objetivo
 
-
-    def generar_pdf(self):
-        """Genera un PDF con la información del plan de aprendizaje."""
-
-        # Cargar el PDF de la plantilla
-        plantilla_pdf = PdfReader(open(settings.BASE_DIR / "gestion_planes" / "pdfs" / "plan_de_clase.pdf", "rb"))
-        pagina = plantilla_pdf.pages[0]
-
-        # Crear un nuevo PDF en memoria
-        buffer = BytesIO()
-        lienzo = canvas.Canvas(buffer, pagesize=landscape(letter))
-        lienzo.setFont("Helvetica", 11)
-
-        # Escribir la información en las coordenadas de la plantilla
-        lienzo.drawString(115, 506, self.pnf)  # Programa
-        lienzo.drawString(330, 506, self.get_nucleo_display())  # Núcleo
-        lienzo.drawString(550, 506, self.get_turno_display())  # Horario
-
-        lienzo.drawString(165, 485, self.unidad_curricular.nombre)  # Unidad Curricular
-        lienzo.drawString(530, 485, self.docente.nombre_completo)  # Profesor(a)
-
-        lienzo.setFillColor(black)
-
-        # Tabla de objetivos
+    def llenar_tabla(self, lienzo: canvas.Canvas, datos: tuple[int, "ObjetivoPlanAprendizaje"]):
+        """ Escribe los objetivos de aprendizaje en la tabla de la plantilla. """
         y = 410
-        objetivos: tuple["ObjetivoPlanAprendizaje"] = self.objetivoplanaprendizaje_set.all()
-        for i, objetivo in enumerate(objetivos, start=1):
+        for i, objetivo in datos:
+            objetivo: ObjetivoPlanAprendizaje
             dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{i}. {objetivo.titulo}", 20), 50, y)
             dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.contenido, 24), 165, y)
             dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.get_estrategia_didactica_display(), 30), 300, y)
             dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.criterio_logro, 26), 480, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(objetivo.duracion_horas) + " horas", 22), 630, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(objetivo.duracion_horas) + " horas", 22), 625, y)
             y -= 60
 
-        # Guardar el PDF en memoria
-        lienzo.save()
-        buffer.seek(0)
-
-        # Combinar la plantilla PDF con la información escrita
-        nuevo_pdf_buffer = BytesIO(buffer.getvalue()) # Creamos un nuevo buffer a partir del valor del anterior.
-        nuevo_pdf = PdfReader(nuevo_pdf_buffer)
-        pagina.merge_page(nuevo_pdf.pages[0])
-
-        # Crear el flujo de salida con el PDF combinado
-        salida = PdfWriter()
-        salida.add_page(pagina)
-        flujo_salida = BytesIO()
-        salida.write(flujo_salida)
-        flujo_salida.seek(0)
-
-        return flujo_salida
+    def obtener_items_pdf(self) -> tuple["ObjetivoPlanAprendizaje"]:
+        return self.objetivoplanaprendizaje_set.all()
 
 
 OPCIONES_ESTRATEGIAS_DIDACTICAS = [
@@ -226,7 +270,7 @@ OPCIONES_ESTRATEGIAS_DIDACTICAS = [
 ]
 
 
-class PlanEvaluacion(models.Model):
+class PlanEvaluacion(models.Model, ExportablePDFMixin):
     """Modelo de plan de evaluación."""
 
     nombre = models.CharField(max_length=32)
@@ -235,6 +279,31 @@ class PlanEvaluacion(models.Model):
 
     # Relación 1:1 con Plan de Aprendizaje
     plan_aprendizaje = models.OneToOneField(PlanAprendizaje, on_delete=models.CASCADE)
+
+    @property
+    def nombre_pnf(self) -> str:
+        return self.plan_aprendizaje.nombre_pnf
+
+    @property
+    def nombre_nucleo(self) -> str:
+        return self.plan_aprendizaje.nombre_nucleo
+
+    @property
+    def nombre_turno(self) -> str:
+        return self.plan_aprendizaje.nombre_turno
+
+    @property
+    def nombre_uc(self) -> str:
+        return self.plan_aprendizaje.nombre_uc
+
+    @property
+    def nombre_docente(self) -> str:
+        return self.plan_aprendizaje.nombre_docente
+
+    @property
+    def desviacion_y(self):
+        """Define la cantidad de pixeles de desviacion Y del contenido."""
+        return 17
 
     class Meta:
         db_table = 'planes_de_evaluacion'
@@ -269,6 +338,22 @@ class PlanEvaluacion(models.Model):
         )
 
         return item
+
+    def llenar_tabla(self, lienzo: canvas.Canvas, datos: tuple[int, "ItemPlanEvaluacion"]):
+        """ Escribe los items del plan de evaluación en la tabla de la plantilla. """
+        y = 425
+        for i, evaluacion in datos:
+            evaluacion: ItemPlanEvaluacion
+            objetivos = ", ".join(obj.titulo for obj in evaluacion.objetivos)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{objetivos}", 20), 48, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_tipo_evaluacion_display(), 24), 165, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_instrumento_evaluacion_display(), 30), 300, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.habilidades_a_evaluar, 26), 505, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(evaluacion.peso) + "%", 22), 692, y)
+            y -= 60
+
+    def obtener_items_pdf(self) -> tuple["ItemPlanEvaluacion"]:
+        return self.itemplanevaluacion_set.all()
 
 
 OPCIONES_INSTRUMENTOS_EVALUACION = [
@@ -321,6 +406,10 @@ class ItemPlanEvaluacion(models.Model):
     peso = models.SmallIntegerField(choices=OPCIONES_PESO_EVALUACION, default=15)
     fecha_planificada = models.DateField()
 
+    @property
+    def objetivos(self) -> tuple["ObjetivoPlanAprendizaje"]:
+        return self.objetivos_asociados.all()
+
     class Meta:
         db_table = 'items_plan_de_evaluacion'
 
@@ -362,7 +451,9 @@ class ObjetivoPlanAprendizaje(models.Model):
             MaxValueValidator(9, "Las horas de duración no pueden ser mayores a 9.")
         ]
     )
-    evaluacion_asociada = models.ForeignKey(ItemPlanEvaluacion, on_delete=models.SET_NULL, null=True)
+    evaluacion_asociada = models.ForeignKey(
+        ItemPlanEvaluacion, on_delete=models.SET_NULL, null=True, related_name="objetivos_asociados"
+    )
 
     class Meta:
         db_table = 'objetivos_plan_de_aprendizaje'

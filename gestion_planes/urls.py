@@ -7,6 +7,7 @@ from .views import (
     DescargarPlanAprendizaje,
     CrearListarObjetivoPlanAprendizaje,
     ObtenerActualizarEliminarObjetivoPlanAprendizaje,
+    DescargarPlanEvaluacion,
     CrearListarPlanEvaluacion,
     ObtenerActualizarEliminarPlanEvaluacion,
     CrearListarItemPlanEvaluacion,
@@ -30,6 +31,7 @@ urlpatterns = [
     # URLs para PlanEvaluacion
     path('planes-evaluacion/', CrearListarPlanEvaluacion.as_view(), name='planes-evaluacion-list-create'),
     path('planes-evaluacion/<pk>/', ObtenerActualizarEliminarPlanEvaluacion.as_view(), name='planes-evaluacion-retrieve-update-destroy'),
+    path('planes-evaluacion/<pk>/descargar', DescargarPlanEvaluacion.as_view(), name='planes-aprendizaje-descargar'),
 
     # URLs para ItemPlanEvaluacion
     path('items-evaluacion/', CrearListarItemPlanEvaluacion.as_view(), name='items-evaluacion-list-create'),
