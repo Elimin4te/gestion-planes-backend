@@ -17,6 +17,9 @@ from autenticacion_docente.permissions import CedulaRequerida
 from autenticacion_docente.models import Docente
 from django.conf import settings
 
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+
 # Vistas para PlanAprendizaje (limitadas por docente)
 class CrearListarPlanAprendizaje(generics.ListCreateAPIView):
     serializer_class = SerializadorPlanAprendizaje
@@ -40,6 +43,25 @@ class ObtenerActualizarEliminarPlanAprendizaje(generics.RetrieveUpdateDestroyAPI
         cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
         docente = Docente.objects.get(cedula=cedula)
         return PlanAprendizaje.objects.filter(docente=docente)
+
+class DescargarPlanAprendizaje(generics.GenericAPIView):
+    permission_classes = [CedulaRequerida]
+
+    def get(self, request, pk):
+        cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
+        docente = Docente.objects.get(cedula=cedula)
+        codigo_grupo = pk
+        pa = get_object_or_404(
+            PlanAprendizaje, 
+            docente=docente, 
+            codigo_grupo=codigo_grupo
+        )
+        pdf_buffer = pa.generar_pdf()
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="plan_aprendizaje_{codigo_grupo}.pdf"'
+        return response
+
+        
 
 # Vistas para ObjetivoPlanAprendizaje (limitadas por docente a través de PlanAprendizaje)
 class CrearListarObjetivoPlanAprendizaje(generics.ListCreateAPIView):

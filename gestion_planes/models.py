@@ -1,12 +1,62 @@
-from typing import Iterable, Optional
+from typing import Iterable
 from datetime import date
 
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.timezone import now
+from django.conf import settings
 
 from autenticacion_docente.models import Docente
+
+from pypdf import PdfReader, PdfWriter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib.colors import black
+from io import BytesIO
+
+
+def ajustar_texto_pdf(texto: str, max_caracteres: int, max_lineas: int = 4, elipsis: bool = False) -> tuple[str]:
+    """Funcion para ajustar los textos a las columnas de los formatos pdf."""
+    if len(texto) > max_caracteres:
+        # Puntos suspensivos si el texto es muy largo.
+        if elipsis:
+            texto = texto[:max_caracteres]
+            texto = texto[:-3] + '...'
+            return texto,
+
+        lineas = []
+        palabras = texto.split()
+        linea_actual = ""
+
+        for palabra in palabras:
+            if len(linea_actual) + len(palabra) + 1 <= max_caracteres:
+                if linea_actual:
+                    linea_actual += " " + palabra
+                else:
+                    linea_actual = palabra
+            else:
+                lineas.append(linea_actual)
+                linea_actual = palabra
+
+        if linea_actual:
+            lineas.append(linea_actual)
+
+        if len(lineas) > max_lineas:
+            for i in range(3):
+                lineas[-1] = lineas[-1][:-3] + '...'
+
+        return lineas
+
+    else:
+        return texto,
+
+
+def dibujar_multi_linea(lienzo: canvas.Canvas, lineas: tuple[str], x: int, y: int, interlinea: int = 12):
+    """Escribe multiples lineas en el PDF."""
+    for linea in lineas:
+        lienzo.drawString(x, y, linea)
+        y -= interlinea
 
 
 OPCIONES_TRAYECTO = [
@@ -48,13 +98,14 @@ OPCIONES_NUCLEO = [
     ('FLO', 'La Floresta'),
     ('URB', 'La Urbina'),
     ('ALT', 'Altagracia'),
-    ('CRY', 'Carayaca')
+    ('LGA', 'La Guaira')
 ]
 
 OPCIONES_TURNO = [
     ('N', 'Nocturno'),
     ('V', 'Vespertino'),
-    ('M', 'Mañana')
+    ('M', 'Matutino'),
+    ('S', 'Sabatino'),
 ]
 
 
@@ -101,6 +152,58 @@ class PlanAprendizaje(models.Model):
         )
 
         return objetivo
+
+
+    def generar_pdf(self):
+        """Genera un PDF con la información del plan de aprendizaje."""
+
+        # Cargar el PDF de la plantilla
+        plantilla_pdf = PdfReader(open(settings.BASE_DIR / "gestion_planes" / "pdfs" / "plan_de_clase.pdf", "rb"))
+        pagina = plantilla_pdf.pages[0]
+
+        # Crear un nuevo PDF en memoria
+        buffer = BytesIO()
+        lienzo = canvas.Canvas(buffer, pagesize=landscape(letter))
+        lienzo.setFont("Helvetica", 11)
+
+        # Escribir la información en las coordenadas de la plantilla
+        lienzo.drawString(115, 506, self.pnf)  # Programa
+        lienzo.drawString(330, 506, self.get_nucleo_display())  # Núcleo
+        lienzo.drawString(550, 506, self.get_turno_display())  # Horario
+
+        lienzo.drawString(165, 485, self.unidad_curricular.nombre)  # Unidad Curricular
+        lienzo.drawString(530, 485, self.docente.nombre_completo)  # Profesor(a)
+
+        lienzo.setFillColor(black)
+
+        # Tabla de objetivos
+        y = 410
+        objetivos: tuple["ObjetivoPlanAprendizaje"] = self.objetivoplanaprendizaje_set.all()
+        for i, objetivo in enumerate(objetivos, start=1):
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{i}. {objetivo.titulo}", 20), 50, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.contenido, 24), 165, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.get_estrategia_didactica_display(), 30), 300, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.criterio_logro, 26), 480, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(objetivo.duracion_horas) + " horas", 22), 630, y)
+            y -= 60
+
+        # Guardar el PDF en memoria
+        lienzo.save()
+        buffer.seek(0)
+
+        # Combinar la plantilla PDF con la información escrita
+        nuevo_pdf_buffer = BytesIO(buffer.getvalue()) # Creamos un nuevo buffer a partir del valor del anterior.
+        nuevo_pdf = PdfReader(nuevo_pdf_buffer)
+        pagina.merge_page(nuevo_pdf.pages[0])
+
+        # Crear el flujo de salida con el PDF combinado
+        salida = PdfWriter()
+        salida.add_page(pagina)
+        flujo_salida = BytesIO()
+        salida.write(flujo_salida)
+        flujo_salida.seek(0)
+
+        return flujo_salida
 
 
 OPCIONES_ESTRATEGIAS_DIDACTICAS = [
@@ -255,8 +358,8 @@ class ObjetivoPlanAprendizaje(models.Model):
     estrategia_didactica = models.CharField(max_length=4, choices=OPCIONES_ESTRATEGIAS_DIDACTICAS, default='CL')
     duracion_horas = models.SmallIntegerField(
         validators=[
-            MinValueValidator(10, "Las horas de duración no pueden ser menores a 10."),
-            MaxValueValidator(200, "Las horas de duración no pueden ser mayores a 200.")
+            MinValueValidator(2, "Las horas de duración no pueden ser menores a 2."),
+            MaxValueValidator(9, "Las horas de duración no pueden ser mayores a 9.")
         ]
     )
     evaluacion_asociada = models.ForeignKey(ItemPlanEvaluacion, on_delete=models.SET_NULL, null=True)
