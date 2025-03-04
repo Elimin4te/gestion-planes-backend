@@ -419,6 +419,17 @@ class ItemPlanEvaluacion(models.Model):
         self.plan_evaluacion.fecha_modificacion = now()
         self.plan_evaluacion.save()
 
+    def agregar_objetivo(
+        self,
+        objetivo: "ObjetivoPlanAprendizaje",
+    ):
+
+        """ Agrega un objetivo (existente o no) a esta evaluación. """
+
+        objetivo.evaluacion_asociada = self
+        objetivo.save()
+        return objetivo
+
     def validar_suma_pesos(self):
         """Valida que la suma de los pesos de los ítems no exceda el 100%."""
 

@@ -6,5 +6,6 @@ from . import views
 urlpatterns = [
     path('login', views.IniciarSesion.as_view(), name='login-autenticacion-docente'), # Principal
     path('logout', views.CerrarSesion.as_view(), name='logout-autenticacion-docente'),
-    path('info', views.ObtenerDatosDocente.as_view(), name='info-autenticacion-docente')
+    path('info', views.ObtenerDatosDocente.as_view(), name='info-autenticacion-docente'),
+    path('registro', views.RegistroDocente.as_view(), name='registro-autenticacion-docente')
 ]

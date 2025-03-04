@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, OpenApiResponse
@@ -76,3 +77,11 @@ class CerrarSesion(APIView):
         response = Response(status=202)
         response.delete_cookie(settings.NOMBRE_COOKIE_DOCENTE)
         return response
+
+
+class RegistroDocente(CreateAPIView):
+    """Controlador para registrar un nuevo docente."""
+
+    serializer_class = SerializadorDocente
+    
+
