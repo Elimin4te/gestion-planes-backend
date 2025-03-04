@@ -170,7 +170,12 @@ def crear_plan_evaluacion(pa: PlanAprendizaje):
     )
 
 
-def crear_item_pe(pe: PlanEvaluacion, habilidades_a_evaluar: str, peso: int):
+def crear_item_pe(
+    pe: PlanEvaluacion, 
+    habilidades_a_evaluar: str, 
+    peso: int, 
+    objetivos_asociados: tuple[ObjetivoPlanAprendizaje] = ()
+):
 
     instrumento_evaluacion = opcion_aleatoria(OPCIONES_INSTRUMENTOS_EVALUACION)
     tipo_evaluacion = opcion_aleatoria(OPCIONES_TIPO_EVALUACION)
@@ -181,7 +186,7 @@ def crear_item_pe(pe: PlanEvaluacion, habilidades_a_evaluar: str, peso: int):
         days=random.randint(0, (fecha_fin - fecha_inicio).days)
     )
 
-    return crear_si_no_existe(
+    item_pe = crear_si_no_existe(
         ItemPlanEvaluacion,
         campo_pk="habilidades_a_evaluar",
         valor_pk=habilidades_a_evaluar,
@@ -193,6 +198,11 @@ def crear_item_pe(pe: PlanEvaluacion, habilidades_a_evaluar: str, peso: int):
             "tipo_evaluacion": tipo_evaluacion,
         },
     )
+
+    for obj in objetivos_asociados:
+        item_pe.agregar_objetivo(obj)
+
+    return item_pe
 
 
 def run():
@@ -230,6 +240,11 @@ def run():
         {
             "titulo": "Comprender el concepto de integral definida",
             "contenido": "Calcular integrales definidas utilizando el teorema fundamental del cálculo.",
+            "criterio_logro": "Aplicar la integral definida para calcular áreas bajo curvas y volúmenes de sólidos de revolución.",
+        },
+        {
+            "titulo": "Resolver problemas de integrales definidas",
+            "contenido": "Resolver problemas de integrales definidas utilizando el teorema fundamental del cálculo.",
             "criterio_logro": "Aplicar la integral definida para calcular áreas bajo curvas y volúmenes de sólidos de revolución.",
         },
         {
@@ -312,30 +327,33 @@ def run():
     data_items_mat1 = [
         {
             "habilidades_a_evaluar": "Resolución de ecuaciones y desigualdades algebraicas",
-            "peso": 15,
+            "peso": 20,
+            "objetivos_asociados": objetivos_mat1[0]
         },
         {
             "habilidades_a_evaluar": "Operaciones con funciones (suma, resta, multiplicación, división, composición)",
-            "peso": 15,
+            "peso": 20,
+            "objetivos_asociados": objetivos_mat1[1]
         },
-        {"habilidades_a_evaluar": "Cálculo de límites de funciones", "peso": 15},
+        {
+            "habilidades_a_evaluar": "Cálculo de límites de funciones", 
+            "peso": 15,
+            "objetivos_asociados": objetivos_mat1[2]
+        },
         {
             "habilidades_a_evaluar": "Cálculo de derivadas de funciones (reglas básicas y derivadas de orden superior)",
-            "peso": 15,
+            "peso": 20,
+            "objetivos_asociados": objetivos_mat1[3]
         },
         {
-            "habilidades_a_evaluar": "Aplicación de la derivada para la resolución de problemas de optimización",
-            "peso": 10,
-        },
-        {"habilidades_a_evaluar": "Cálculo de integrales definidas", "peso": 15},
-        {
-            "habilidades_a_evaluar": "Aplicación de la integral definida para el cálculo de áreas y volúmenes",
-            "peso": 15,
+            "habilidades_a_evaluar": "Cálculo de integrales definidas", 
+            "peso": 25,
+            "objetivos_asociados": objetivos_mat1[4:6]
         },
     ]
 
     items_mat1 = [
-        crear_item_pe(pe_mat1, o["habilidades_a_evaluar"], o["peso"])
+        crear_item_pe(pe_mat1, o["habilidades_a_evaluar"], o["peso"], o["objetivos_asociados"])
         for o in data_items_mat1
     ]
 
@@ -343,23 +361,27 @@ def run():
         {
             "habilidades_a_evaluar": "Análisis y evaluación de argumentos en textos y discursos",
             "peso": 25,
+            "objetivos_asociados": objetivos_fc1[0]
         },
         {
             "habilidades_a_evaluar": "Evaluación de la credibilidad y relevancia de fuentes de información",
             "peso": 25,
+            "objetivos_asociados": objetivos_fc1[1]
         },
         {
             "habilidades_a_evaluar": "Identificación y análisis de sesgos cognitivos en situaciones reales",
             "peso": 25,
+            "objetivos_asociados": objetivos_fc1[2]
         },
         {
             "habilidades_a_evaluar": "Aplicación del pensamiento crítico en la resolución de problemas sociales",
             "peso": 25,
+            "objetivos_asociados": objetivos_fc1[3]
         },
     ]
 
     items_fc1 = [
-        crear_item_pe(pe_fc1, o["habilidades_a_evaluar"], o["peso"])
+        crear_item_pe(pe_fc1, o["habilidades_a_evaluar"], o["peso"], o["objetivos_asociados"])
         for o in data_items_fc1
     ]
 
@@ -367,31 +389,32 @@ def run():
         {
             "habilidades_a_evaluar": "Diseño de algoritmos en pseudocódigo y diagramas de flujo",
             "peso": 15,
+            "objetivos_asociados": objetivos_ayp[0]
         },
         {
             "habilidades_a_evaluar": "Implementación de programas con estructuras de control (if, else, for, while)",
             "peso": 20,
+            "objetivos_asociados": objetivos_ayp[1]
         },
         {
             "habilidades_a_evaluar": "Desarrollo de programas utilizando funciones y modularización",
             "peso": 20,
+            "objetivos_asociados": objetivos_ayp[2]
         },
         {
             "habilidades_a_evaluar": "Manejo y manipulación de arreglos y listas en programas",
-            "peso": 15,
-        },
-        {
-            "habilidades_a_evaluar": "Implementación de algoritmos de búsqueda y ordenamiento básicos",
             "peso": 20,
+            "objetivos_asociados": objetivos_ayp[3]
         },
         {
             "habilidades_a_evaluar": "Resolución de problemas prácticos aplicando los conceptos de programación",
-            "peso": 10,
+            "peso": 25,
+            "objetivos_asociados": objetivos_ayp[4]
         },
     ]
 
     items_ayp = [
-        crear_item_pe(pe_ayp, o["habilidades_a_evaluar"], o["peso"])
+        crear_item_pe(pe_ayp, o["habilidades_a_evaluar"], o["peso"], o["objetivos_asociados"])
         for o in data_items_ayp
     ]
 
