@@ -173,7 +173,7 @@ OPCIONES_TURNO = [
 class PlanAprendizaje(models.Model, ExportablePDFMixin):
     """Modelo de plan de aprendizaje."""
 
-    codigo_grupo = models.CharField(max_length=24, primary_key=True)
+    codigo_grupo = models.CharField(max_length=32, primary_key=True)
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     unidad_curricular = models.ForeignKey(UnidadCurricular, on_delete=models.CASCADE)
     nucleo = models.CharField(max_length=6, choices=OPCIONES_NUCLEO)
@@ -273,7 +273,7 @@ OPCIONES_ESTRATEGIAS_DIDACTICAS = [
 class PlanEvaluacion(models.Model, ExportablePDFMixin):
     """Modelo de plan de evaluación."""
 
-    nombre = models.CharField(max_length=32)
+    nombre = models.CharField(max_length=96)
     fecha_creacion = models.DateTimeField(default=now)
     fecha_modificacion = models.DateTimeField(null=True)
 
@@ -447,7 +447,7 @@ class ObjetivoPlanAprendizaje(models.Model):
     """Modelo de objetivos de plan de aprendizaje."""
 
     plan_aprendizaje = models.ForeignKey(PlanAprendizaje, on_delete=models.CASCADE)
-    titulo = models.CharField(max_length=32)
+    titulo = models.CharField(max_length=64)
     contenido = models.TextField()
     criterio_logro = models.TextField()
     estrategia_didactica = models.CharField(max_length=4, choices=OPCIONES_ESTRATEGIAS_DIDACTICAS, default='CL')
