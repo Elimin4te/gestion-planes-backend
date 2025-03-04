@@ -36,7 +36,7 @@ class ExportablePDFMixin:
     @property
     def desviacion_y(self):
         """Define la cantidad de pixeles de desviacion Y del contenido."""
-        return 0
+        return 12
 
     def escribir_encabezado(self, lienzo: canvas.Canvas):
         """Escribe la información del PNF, núcleo, docente y UC en el pdf.
@@ -50,15 +50,15 @@ class ExportablePDFMixin:
         """
 
         # Escribir la información en las coordenadas de la plantilla
-        lienzo.drawString(115, 506 + self.desviacion_y, self.nombre_pnf)  # Programa
-        lienzo.drawString(330, 506 + self.desviacion_y, self.nombre_nucleo)  # Núcleo
-        lienzo.drawString(550, 506 + self.desviacion_y, self.nombre_turno)  # Horario
+        lienzo.drawString(120, 506 + self.desviacion_y, self.nombre_pnf)  # Programa
+        lienzo.drawString(342, 506 + self.desviacion_y, self.nombre_nucleo)  # Núcleo
+        lienzo.drawString(548, 506 + self.desviacion_y, self.nombre_turno)  # Horario
 
-        lienzo.drawString(165, 485 + self.desviacion_y, self.nombre_uc)  # Unidad Curricular
-        lienzo.drawString(530, 485 + self.desviacion_y, self.nombre_docente)  # Profesor(a)
+        lienzo.drawString(185, 485 + self.desviacion_y, self.nombre_uc)  # Unidad Curricular
+        lienzo.drawString(545, 485 + self.desviacion_y, self.nombre_docente)  # Profesor(a)
 
         # Fecha de Modificación (o Creación) del Plan
-        lienzo.drawString(50, 30 + self.desviacion_y, (self.fecha_modificacion or self.fecha_creacion).strftime('%d/%m/%Y'))
+        lienzo.drawString(55, 30 + self.desviacion_y, (self.fecha_modificacion or self.fecha_creacion).strftime('%d/%m/%Y'))
 
 
     def llenar_tabla(self, lienzo: canvas.Canvas, datos: tuple[int, Any]):
@@ -236,15 +236,15 @@ class PlanAprendizaje(models.Model, ExportablePDFMixin):
 
     def llenar_tabla(self, lienzo: canvas.Canvas, datos: tuple[int, "ObjetivoPlanAprendizaje"]):
         """ Escribe los objetivos de aprendizaje en la tabla de la plantilla. """
-        y = 410
+        y = 412
         for i, objetivo in datos:
             objetivo: ObjetivoPlanAprendizaje
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{i}. {objetivo.titulo}", 20), 50, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.contenido, 24), 165, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.get_estrategia_didactica_display(), 30), 300, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.criterio_logro, 26), 480, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(objetivo.duracion_horas) + " horas", 22), 625, y)
-            y -= 60
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{i}. {objetivo.titulo}", 30), 37, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.contenido, 40), 190, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.get_estrategia_didactica_display(), 18), 390, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(objetivo.criterio_logro, 30), 508, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(objetivo.duracion_horas) + " horas", 16), 690, y)
+            y -= 58
 
     def obtener_items_pdf(self) -> tuple["ObjetivoPlanAprendizaje"]:
         return self.objetivoplanaprendizaje_set.all()
@@ -300,11 +300,6 @@ class PlanEvaluacion(models.Model, ExportablePDFMixin):
     def nombre_docente(self) -> str:
         return self.plan_aprendizaje.nombre_docente
 
-    @property
-    def desviacion_y(self):
-        """Define la cantidad de pixeles de desviacion Y del contenido."""
-        return 17
-
     class Meta:
         db_table = 'planes_de_evaluacion'
 
@@ -341,16 +336,16 @@ class PlanEvaluacion(models.Model, ExportablePDFMixin):
 
     def llenar_tabla(self, lienzo: canvas.Canvas, datos: tuple[int, "ItemPlanEvaluacion"]):
         """ Escribe los items del plan de evaluación en la tabla de la plantilla. """
-        y = 425
+        y = 412
         for i, evaluacion in datos:
             evaluacion: ItemPlanEvaluacion
             objetivos = ", ".join(obj.titulo for obj in evaluacion.objetivos)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{objetivos}", 20), 48, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_tipo_evaluacion_display(), 24), 165, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_instrumento_evaluacion_display(), 30), 300, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.habilidades_a_evaluar, 26), 505, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(evaluacion.peso) + "%", 22), 692, y)
-            y -= 60
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_instrumento_evaluacion_display(), 24), 37, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_tipo_evaluacion_display(), 24), 195, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{objetivos}", 20), 313, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.habilidades_a_evaluar, 26), 483, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(evaluacion.peso) + "%", 22), 714, y)
+            y -= 58
 
     def obtener_items_pdf(self) -> tuple["ItemPlanEvaluacion"]:
         return self.itemplanevaluacion_set.all()
