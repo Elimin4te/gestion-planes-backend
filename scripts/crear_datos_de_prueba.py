@@ -121,7 +121,7 @@ def crear_plan_aprendizaje(docente: Docente, uc: UnidadCurricular, pnf: str):
     turno = opcion_aleatoria(OPCIONES_TURNO)
 
     año = datetime.now().year
-    codigo_grupo = f"INF-({uc.codigo})-{nucleo}-{turno} ({año}-{año + 1})"
+    codigo_grupo = f"INF_({uc.codigo})_{nucleo}_{turno}_({año}-{año + 1})"
 
     return crear_si_no_existe(
         entidad=PlanAprendizaje,
@@ -243,7 +243,7 @@ def run():
             "criterio_logro": "Aplicar la integral definida para calcular áreas bajo curvas y volúmenes de sólidos de revolución.",
         },
         {
-            "titulo": "Integrales definidas: problemas",
+            "titulo": "Problemas de Integrales definidas",
             "contenido": "Resolver problemas de integrales definidas utilizando el teorema fundamental del cálculo.",
             "criterio_logro": "Aplicar la integral definida para calcular áreas bajo curvas y volúmenes de sólidos de revolución.",
         },

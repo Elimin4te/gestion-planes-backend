@@ -269,6 +269,9 @@ OPCIONES_ESTRATEGIAS_DIDACTICAS = [
     ('OT', 'Otras'),
 ]
 
+def pe_default():
+    return (42 * 1103515245 + 12345) & 0x7fffffff % (100 - 1 + 1) + 1
+
 
 class PlanEvaluacion(models.Model, ExportablePDFMixin):
     """Modelo de plan de evaluación."""

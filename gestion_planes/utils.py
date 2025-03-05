@@ -25,8 +25,8 @@ def ajustar_texto_pdf(texto: str, max_caracteres: int, max_lineas: int = 4, elip
             lineas.append(linea_actual)
 
         if len(lineas) > max_lineas:
-            for i in range(3):
-                lineas[-1] = lineas[-1][:-3] + '...'
+            lineas[max_lineas-1] = ' '.join(lineas[max_lineas-1].split(' ')[:-1]) + '...'
+            lineas = lineas[:max_lineas]
 
         return lineas
 

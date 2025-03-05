@@ -38,7 +38,7 @@ class SerializadorPlanAprendizaje(serializers.ModelSerializer):
 
 
 class SerializadorItemPlanEvaluacion(serializers.ModelSerializer):
-    objetivos_asociados = SerializadorObjetivoPlanAprendizaje(many=True, read_only=True, source='objetivoplanaprendizaje_set')
+    objetivos = SerializadorObjetivoPlanAprendizaje(many=True, read_only=True, source='objetivos_asociados')
     class Meta:
         model = ItemPlanEvaluacion
         fields = '__all__'
