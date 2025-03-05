@@ -345,8 +345,8 @@ class PlanEvaluacion(models.Model, ExportablePDFMixin):
             objetivos = ", ".join(obj.titulo for obj in evaluacion.objetivos)
             dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_instrumento_evaluacion_display(), 24), 37, y)
             dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.get_tipo_evaluacion_display(), 24), 195, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{objetivos}", 20), 313, y)
-            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.habilidades_a_evaluar, 26), 483, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(f"{objetivos}", 36), 313, y)
+            dibujar_multi_linea(lienzo, ajustar_texto_pdf(evaluacion.habilidades_a_evaluar, 39), 483, y)
             dibujar_multi_linea(lienzo, ajustar_texto_pdf(str(evaluacion.peso) + "%", 22), 714, y)
             y -= 58
 
