@@ -1,4 +1,4 @@
-from typing import Iterable, Any
+from typing import Iterable, Optional, Any
 from datetime import date
 from math import ceil
 from pathlib import Path
@@ -426,11 +426,17 @@ class ItemPlanEvaluacion(models.Model):
 
     def clean(self):
         super().clean()
-        self.validar_suma_pesos()
 
+        self.validar_suma_pesos()
         # Asignar fecha de modificación de plan de evaluación.
         self.plan_evaluacion.fecha_modificacion = now()
         self.plan_evaluacion.save()
+
+
+    def save(self, force_insert: bool = ..., force_update: bool = ..., using: Optional[str] = ..., update_fields: Optional[Iterable[str]] = ...) -> None:
+        self.full_clean()
+        return super().save(force_insert, force_update, using, update_fields)
+
 
     def agregar_objetivo(
         self,
@@ -448,11 +454,12 @@ class ItemPlanEvaluacion(models.Model):
 
         # Obtiene todos los ítems del plan de evaluación
         items: Iterable[ItemPlanEvaluacion] = ItemPlanEvaluacion.objects.filter(plan_evaluacion=self.plan_evaluacion)
-        suma_pesos = sum(item.peso for item in items)
+        suma_existente = sum(item.peso for item in items)
+        suma_pesos = suma_existente + self.peso
 
         if suma_pesos > 100:
             raise ValidationError(
-                "La suma de los pesos de los ítems no puede exceder el 100%."
+                {"suma_de_pesos": f"La suma de los pesos de los ítems no puede exceder el 100%."}
             )
 
 

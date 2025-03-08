@@ -22,15 +22,18 @@ class SerializadorUnidadCurricular(serializers.ModelSerializer):
 
 
 class SerializadorObjetivoPlanAprendizaje(serializers.ModelSerializer):
+
     class Meta:
         model = ObjetivoPlanAprendizaje
         fields = '__all__'
 
 
 class SerializadorPlanAprendizaje(serializers.ModelSerializer):
-    docente = serializers.PrimaryKeyRelatedField(queryset=Docente.objects.all())
+    docente = SerializadorDocente(read_only=True)
     unidad_curricular = serializers.PrimaryKeyRelatedField(queryset=UnidadCurricular.objects.all())
-    objetivos_plan_aprendizaje = SerializadorObjetivoPlanAprendizaje(many=True, read_only=True, source='objetivoplanaprendizaje_set')
+    objetivos_plan_aprendizaje = SerializadorObjetivoPlanAprendizaje(many=True, required=False, source='objetivoplanaprendizaje_set')
+    fecha_creacion = serializers.DateTimeField(read_only=True)
+    fecha_modificacion = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = PlanAprendizaje
@@ -38,15 +41,21 @@ class SerializadorPlanAprendizaje(serializers.ModelSerializer):
 
 
 class SerializadorItemPlanEvaluacion(serializers.ModelSerializer):
-    objetivos = SerializadorObjetivoPlanAprendizaje(many=True, read_only=True, source='objetivos_asociados')
+    objetivos = SerializadorObjetivoPlanAprendizaje(many=True, required=False, source='objetivos_asociados')
     class Meta:
         model = ItemPlanEvaluacion
         fields = '__all__'
 
+    def validate(self, attrs):
+        instance = ItemPlanEvaluacion(**attrs)
+        instance.full_clean()
+
 
 class SerializadorPlanEvaluacion(serializers.ModelSerializer):
     plan_aprendizaje = serializers.PrimaryKeyRelatedField(queryset=PlanAprendizaje.objects.all())
-    items_plan_evaluacion = SerializadorItemPlanEvaluacion(many=True, read_only=True, source='itemplanevaluacion_set')
+    items_plan_evaluacion = SerializadorItemPlanEvaluacion(many=True, required=False, source='itemplanevaluacion_set')
+    fecha_creacion = serializers.DateTimeField(read_only=True)
+    fecha_modificacion = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = PlanEvaluacion
