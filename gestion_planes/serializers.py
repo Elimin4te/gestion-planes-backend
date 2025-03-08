@@ -49,6 +49,7 @@ class SerializadorItemPlanEvaluacion(serializers.ModelSerializer):
     def validate(self, attrs):
         instance = ItemPlanEvaluacion(**attrs)
         instance.full_clean()
+        return super().validate(attrs)
 
 
 class SerializadorPlanEvaluacion(serializers.ModelSerializer):

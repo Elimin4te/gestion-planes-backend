@@ -313,6 +313,10 @@ class PlanEvaluacion(models.Model, ExportablePDFMixin):
     def nombre_docente(self) -> str:
         return self.plan_aprendizaje.nombre_docente
 
+    @property
+    def suma_de_pesos_evaluaciones(self) -> int:
+        return sum(item.peso for item in self.itemplanevaluacion_set.all())
+
     class Meta:
         db_table = 'planes_de_evaluacion'
 
@@ -433,7 +437,7 @@ class ItemPlanEvaluacion(models.Model):
         self.plan_evaluacion.save()
 
 
-    def save(self, force_insert: bool = ..., force_update: bool = ..., using: Optional[str] = ..., update_fields: Optional[Iterable[str]] = ...) -> None:
+    def save(self, force_insert: bool = False, force_update: bool = False, using: Optional[str] = None, update_fields: Optional[Iterable[str]] = None) -> None:
         self.full_clean()
         return super().save(force_insert, force_update, using, update_fields)
 
@@ -454,8 +458,12 @@ class ItemPlanEvaluacion(models.Model):
 
         # Obtiene todos los ítems del plan de evaluación
         items: Iterable[ItemPlanEvaluacion] = ItemPlanEvaluacion.objects.filter(plan_evaluacion=self.plan_evaluacion)
-        suma_existente = sum(item.peso for item in items)
-        suma_pesos = suma_existente + self.peso
+        suma_pesos = sum(item.peso for item in items)
+
+        codigo_unico: str = lambda item: f"{item.plan_evaluacion_id}-{item.instrumento_evaluacion}-{item.habilidades_a_evaluar}-{str(item.fecha_planificada)}"
+        
+        if not codigo_unico(self) in [codigo_unico(item) for item in items]:
+            suma_pesos += self.peso
 
         if suma_pesos > 100:
             raise ValidationError(

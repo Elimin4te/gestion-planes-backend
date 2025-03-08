@@ -1,6 +1,5 @@
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.serializers import ValidationError
-from rest_framework.response import Response
 
 from .models import (
     UnidadCurricular,
@@ -110,6 +109,7 @@ class DescargarPlanEvaluacion(generics.GenericAPIView):
     permission_classes = [CedulaRequerida]
 
     def get(self, request, pk):
+
         cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
         docente = Docente.objects.get(cedula=cedula)
         _id = pk
@@ -118,6 +118,27 @@ class DescargarPlanEvaluacion(generics.GenericAPIView):
             plan_aprendizaje__docente=docente, 
             id=_id
         )
+
+        # Valida que el peso sea justamente 100% para descargar
+        if pe.suma_de_pesos_evaluaciones != 100:
+            raise ValidationError(
+                {'suma_de_pesos': f'Las evaluaciones del plan de evaluación no suman el 100% ({pe.suma_de_pesos_evaluaciones}%)'}
+            )
+
+        # Valida los items sin objetivos asociados
+        items_sin_objetivos = []
+        for item in pe.itemplanevaluacion_set.all():
+            item: ItemPlanEvaluacion
+            if len(item.objetivos) == 0:
+                items_sin_objetivos.append(
+                    f"{item.get_instrumento_evaluacion_display()} ({item.peso})%"
+                )
+
+        if len(items_sin_objetivos) > 0:
+            raise ValidationError(
+                {'items_sin_objetivo': f'Hay evaluaciones sin objetivos asociados: {", ".join(items_sin_objetivos)}'}
+            )
+
         pdf_buffer = pe.generar_pdf()
         response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename={pe.nombre}.pdf"'
