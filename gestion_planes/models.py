@@ -101,13 +101,23 @@ class ExportablePDFMixin:
         salida = PdfWriter()
         items = self.obtener_items_pdf()
 
+        # Enumera y separa los items
+        items = enumerate(items, 1)
+        items = tuple((idx, item) for idx, item in items)
+
         # Se dividen los objetivos según la cantidad máxima de entradas por PDF
         paginas_requeridas = ceil(len(items) / self.maximo_objetos_por_pagina)
-        partes = tuple([items[i:self.maximo_objetos_por_pagina] for i in range(0, paginas_requeridas)])
+        partes = tuple(
+            [
+                items[
+                    self.maximo_objetos_por_pagina*i:self.maximo_objetos_por_pagina*(i+1)
+                ] for i in range(0, paginas_requeridas)
+            ]
+        )
 
         # Se generan las paginas para cada parte y se agregan a la salida
         for parte in partes:
-            salida.add_page(self.generar_pagina(enumerate(parte, 1)))
+            salida.add_page(self.generar_pagina(parte))
 
         flujo_salida = BytesIO()
         salida.write(flujo_salida)
