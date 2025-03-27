@@ -4,10 +4,11 @@ from math import ceil
 from pathlib import Path
 
 from django.db import models
-from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.timezone import now
 from django.conf import settings
+
+from rest_framework.serializers import ValidationError
 
 from autenticacion_docente.models import Docente
 
@@ -94,12 +95,17 @@ class ExportablePDFMixin:
 
         return plantilla
 
+    def validar_datos_para_exportar(self, items: tuple = None):
+        """Valida que los datos a exportar sean aceptables."""
+        ...
+
     def generar_pdf(self):
         """Genera las páginas del archivo y devuelve el buffer de bytes final."""
 
         # Crear el flujo de salida con el PDF combinado
         salida = PdfWriter()
         items = self.obtener_items_pdf()
+        self.validar_datos_para_exportar(items)
 
         # Enumera y separa los items
         items = enumerate(items, 1)
@@ -259,6 +265,16 @@ class PlanAprendizaje(models.Model, ExportablePDFMixin):
     def obtener_items_pdf(self) -> tuple["ObjetivoPlanAprendizaje"]:
         return self.objetivoplanaprendizaje_set.all()
 
+    
+    def validar_datos_para_exportar(self, items: tuple["ObjetivoPlanAprendizaje"]):
+
+        items_sin_evaluacion: tuple["ObjetivoPlanAprendizaje"] = tuple(filter(lambda item: item.evaluacion_asociada is None, items))
+        items_sin_evaluacion = [item.titulo for item in items_sin_evaluacion]
+        if len(items_sin_evaluacion) > 0:
+            raise ValidationError(
+                f"No se puede exportar el plan ya que hay objetivos de plan de aprendizaje sin evaluación asociada: {', '.join(items_sin_evaluacion)}"
+            )
+
 
 OPCIONES_ESTRATEGIAS_DIDACTICAS = [
     ('CL', 'Clase magistral'),
@@ -278,10 +294,6 @@ OPCIONES_ESTRATEGIAS_DIDACTICAS = [
     ('EV', 'Evaluación'),
     ('OT', 'Otras'),
 ]
-
-def pe_default():
-    return (42 * 1103515245 + 12345) & 0x7fffffff % (100 - 1 + 1) + 1
-
 
 class PlanEvaluacion(models.Model, ExportablePDFMixin):
     """Modelo de plan de evaluación."""
@@ -364,6 +376,15 @@ class PlanEvaluacion(models.Model, ExportablePDFMixin):
         return self.itemplanevaluacion_set.all()
 
 
+    def validar_datos_para_exportar(self, items: tuple["ItemPlanEvaluacion"]):
+
+        self.plan_aprendizaje.validar_datos_para_exportar()
+        peso_total = sum(item.peso for item in items) 
+        if not peso_total == 100:
+            raise ValidationError(f"El plan de evaluacion debe tener un total de 100%, actualmente tiene {peso_total}%.")
+
+
+
 OPCIONES_INSTRUMENTOS_EVALUACION = [
     ('PR', 'Prueba escrita (objetiva)'),
     ('PE', 'Prueba escrita (ensayo)'),
@@ -431,6 +452,7 @@ class ItemPlanEvaluacion(models.Model):
         # Asignar fecha de modificación de plan de evaluación.
         self.plan_evaluacion.fecha_modificacion = now()
         self.plan_evaluacion.save()
+
 
     def agregar_objetivo(
         self,

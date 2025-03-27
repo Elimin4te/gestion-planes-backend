@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [
     'localhost'
 ]
 
+CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 
 # Constantes especificas de funcionalidades
