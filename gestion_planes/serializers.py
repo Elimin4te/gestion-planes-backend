@@ -31,10 +31,17 @@ class SerializadorPlanAprendizaje(serializers.ModelSerializer):
     docente = serializers.PrimaryKeyRelatedField(queryset=Docente.objects.all())
     unidad_curricular = serializers.PrimaryKeyRelatedField(queryset=UnidadCurricular.objects.all())
     objetivos_plan_aprendizaje = SerializadorObjetivoPlanAprendizaje(many=True, read_only=True, source='objetivoplanaprendizaje_set')
+    plan_evaluacion = serializers.SerializerMethodField("get_plan_evaluacion")
 
     class Meta:
         model = PlanAprendizaje
         fields = '__all__'
+
+    def get_plan_evaluacion(self, instancia: PlanAprendizaje) -> int | None:
+        try:
+            return PlanEvaluacion.objects.get(plan_aprendizaje=instancia).pk
+        except PlanEvaluacion.DoesNotExist:
+            pass
 
 
 class SerializadorItemPlanEvaluacion(serializers.ModelSerializer):

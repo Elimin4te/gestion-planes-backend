@@ -71,7 +71,7 @@ class CrearListarObjetivoPlanAprendizaje(generics.ListCreateAPIView):
     def get_queryset(self):
         cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
         docente = Docente.objects.get(cedula=cedula)
-        return ObjetivoPlanAprendizaje.objects.filter(plan_aprendizaje__docente=docente)
+        return ObjetivoPlanAprendizaje.objects.filter(plan_aprendizaje__docente=docente).order_by('id')
 
 class ObtenerActualizarEliminarObjetivoPlanAprendizaje(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SerializadorObjetivoPlanAprendizaje
@@ -81,8 +81,11 @@ class ObtenerActualizarEliminarObjetivoPlanAprendizaje(generics.RetrieveUpdateDe
         cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
         docente = Docente.objects.get(cedula=cedula)
         return ObjetivoPlanAprendizaje.objects.filter(plan_aprendizaje__docente=docente)
-
-
+    
+    def update(self, request, *args, **kwargs):
+        evaluacion_asociada = request.data.get('evaluacion_asociada')
+        request.data['evaluacion_asociada'] = evaluacion_asociada
+        return super().update(request, *args, **kwargs)
 
 # Vistas para PlanEvaluacion (limitadas por docente a través de PlanAprendizaje)
 class CrearListarPlanEvaluacion(generics.ListCreateAPIView):
@@ -102,7 +105,7 @@ class ObtenerActualizarEliminarPlanEvaluacion(generics.RetrieveUpdateDestroyAPIV
         cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
         docente = Docente.objects.get(cedula=cedula)
         return PlanEvaluacion.objects.filter(plan_aprendizaje__docente=docente)
-
+    
 class DescargarPlanEvaluacion(generics.GenericAPIView):
     permission_classes = [CedulaRequerida]
 
@@ -129,7 +132,16 @@ class CrearListarItemPlanEvaluacion(generics.ListCreateAPIView):
     def get_queryset(self):
         cedula = self.request.COOKIES.get(settings.NOMBRE_COOKIE_DOCENTE)
         docente = Docente.objects.get(cedula=cedula)
-        return ItemPlanEvaluacion.objects.filter(plan_evaluacion__plan_aprendizaje__docente=docente)
+        pe_pk = self.request.GET.get('pe', None)
+        queryset = ItemPlanEvaluacion.objects.filter(
+            plan_evaluacion__plan_aprendizaje__docente=docente,
+        )
+        if pe_pk:
+            queryset.filter(
+                plan_evaluacion__pk=pe_pk
+            )
+        return queryset
+
 
 class ObtenerActualizarEliminarItemPlanEvaluacion(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SerializadorItemPlanEvaluacion

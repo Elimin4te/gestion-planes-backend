@@ -217,6 +217,10 @@ class PlanAprendizaje(models.Model, ExportablePDFMixin):
     @property
     def nombre_docente(self) -> str:
         return self.docente.nombre_completo
+    
+    @property
+    def objetivos_pa(self) -> Iterable["ObjetivoPlanAprendizaje"]:
+        return self.objetivoplanaprendizaje_set.all()
 
     class Meta:
         db_table = 'planes_de_aprendizaje'
@@ -266,13 +270,16 @@ class PlanAprendizaje(models.Model, ExportablePDFMixin):
         return self.objetivoplanaprendizaje_set.all()
 
     
-    def validar_datos_para_exportar(self, items: tuple["ObjetivoPlanAprendizaje"]):
+    def validar_datos_para_exportar(self, items: tuple["ObjetivoPlanAprendizaje"], subllamado: bool = False):
 
         items_sin_evaluacion: tuple["ObjetivoPlanAprendizaje"] = tuple(filter(lambda item: item.evaluacion_asociada is None, items))
         items_sin_evaluacion = [item.titulo for item in items_sin_evaluacion]
+        mensaje = "No se puede exportar el plan de aprendizaje ya que hay objetivos de plan de aprendizaje sin evaluación asociada"
+        if subllamado:
+            mensaje = "No se puede exportar el plan de evaluación ya que hay objetivos de plan de aprendizaje relacionado sin evaluación asociada"
         if len(items_sin_evaluacion) > 0:
             raise ValidationError(
-                f"No se puede exportar el plan ya que hay objetivos de plan de aprendizaje sin evaluación asociada: {', '.join(items_sin_evaluacion)}"
+                f"{mensaje}: {', '.join(items_sin_evaluacion)}"
             )
 
 
@@ -324,6 +331,11 @@ class PlanEvaluacion(models.Model, ExportablePDFMixin):
     @property
     def nombre_docente(self) -> str:
         return self.plan_aprendizaje.nombre_docente
+    
+    @property
+    def peso_total(self) -> int:
+        return sum(item.peso for item in self.itemplanevaluacion_set.all()) 
+
 
     class Meta:
         db_table = 'planes_de_evaluacion'
@@ -378,10 +390,10 @@ class PlanEvaluacion(models.Model, ExportablePDFMixin):
 
     def validar_datos_para_exportar(self, items: tuple["ItemPlanEvaluacion"]):
 
-        self.plan_aprendizaje.validar_datos_para_exportar()
-        peso_total = sum(item.peso for item in items) 
-        if not peso_total == 100:
-            raise ValidationError(f"El plan de evaluacion debe tener un total de 100%, actualmente tiene {peso_total}%.")
+        self.plan_aprendizaje.validar_datos_para_exportar(self.plan_aprendizaje.objetivos_pa, subllamado=True)
+    
+        if not self.peso_total == 100:
+            raise ValidationError(f"El plan de evaluacion debe tener un total de 100%, actualmente tiene {self.peso_total}%.")
 
 
 
@@ -441,6 +453,7 @@ class ItemPlanEvaluacion(models.Model):
 
     class Meta:
         db_table = 'items_plan_de_evaluacion'
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.tipo_evaluacion}-{self.instrumento_evaluacion} {self.peso}% ({self.plan_evaluacion.nombre})"
@@ -498,6 +511,7 @@ class ObjetivoPlanAprendizaje(models.Model):
 
     class Meta:
         db_table = 'objetivos_plan_de_aprendizaje'
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.plan_aprendizaje.codigo_grupo} - {self.titulo}"
