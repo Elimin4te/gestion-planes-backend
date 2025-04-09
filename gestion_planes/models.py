@@ -458,15 +458,6 @@ class ItemPlanEvaluacion(models.Model):
     def __str__(self):
         return f"{self.tipo_evaluacion}-{self.instrumento_evaluacion} {self.peso}% ({self.plan_evaluacion.nombre})"
 
-    def clean(self):
-        super().clean()
-        self.validar_suma_pesos()
-
-        # Asignar fecha de modificación de plan de evaluación.
-        self.plan_evaluacion.fecha_modificacion = now()
-        self.plan_evaluacion.save()
-
-
     def agregar_objetivo(
         self,
         objetivo: "ObjetivoPlanAprendizaje",
@@ -477,18 +468,6 @@ class ItemPlanEvaluacion(models.Model):
         objetivo.evaluacion_asociada = self
         objetivo.save()
         return objetivo
-
-    def validar_suma_pesos(self):
-        """Valida que la suma de los pesos de los ítems no exceda el 100%."""
-
-        # Obtiene todos los ítems del plan de evaluación
-        items: Iterable[ItemPlanEvaluacion] = ItemPlanEvaluacion.objects.filter(plan_evaluacion=self.plan_evaluacion)
-        suma_pesos = sum(item.peso for item in items)
-
-        if suma_pesos > 100:
-            raise ValidationError(
-                "La suma de los pesos de los ítems no puede exceder el 100%."
-            )
 
 
 class ObjetivoPlanAprendizaje(models.Model):
@@ -515,9 +494,3 @@ class ObjetivoPlanAprendizaje(models.Model):
 
     def __str__(self):
         return f"{self.plan_aprendizaje.codigo_grupo} - {self.titulo}"
-
-    def clean(self) -> None:
-        # Asignar fecha de modificación de plan de aprendizaje.
-        self.plan_aprendizaje.fecha_modificacion = now()
-        self.plan_aprendizaje.save()
-        return super().clean()
