@@ -16,7 +16,6 @@ class Docente(models.Model):
     """Modelo de Docente para el flujo de autenticación."""
     
     cedula = models.IntegerField(
-        max_length=20, 
         primary_key=True,
         validators=[
             MinValueValidator(NUMERO_MINIMO_CEDULA, MENSAJE_CEDULA_INVALIDA),
