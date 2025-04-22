@@ -39,3 +39,8 @@ def dibujar_multi_linea(lienzo, lineas: tuple[str], x: int, y: int, interlinea: 
     for linea in lineas:
         lienzo.drawString(x, y, linea)
         y -= interlinea
+
+
+def obtener_valores_de_opciones(opciones: list[tuple[str, str]]) -> tuple[str]:
+    """Devuelve los valores que se utilizan en la base de datos para una lista de opciones."""
+    return [opt[0] for opt in opciones]

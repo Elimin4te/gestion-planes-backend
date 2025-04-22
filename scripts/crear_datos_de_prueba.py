@@ -46,7 +46,7 @@ def crear_docentes():
         crear_si_no_existe(
             entidad=Docente,
             campo_pk="cedula",
-            valor_pk="V-28318187",
+            valor_pk=28318187,
             datos={
                 "correo": "sidesrev@gmail.com",
                 "nombre": "Ricardo",
@@ -56,7 +56,7 @@ def crear_docentes():
         crear_si_no_existe(
             entidad=Docente,
             campo_pk="cedula",
-            valor_pk="V-22807503",
+            valor_pk=22807503,
             datos={
                 "correo": "vhoggin0@free.fr",
                 "nombre": "Victoria",
@@ -66,7 +66,7 @@ def crear_docentes():
         crear_si_no_existe(
             entidad=Docente,
             campo_pk="cedula",
-            valor_pk="V-26333054",
+            valor_pk=26333054,
             datos={
                 "correo": "jperez1@eepurl.com",
                 "nombre": "José",

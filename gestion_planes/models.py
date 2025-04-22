@@ -18,7 +18,7 @@ from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.colors import black
 from io import BytesIO
 
-from .utils import dibujar_multi_linea, ajustar_texto_pdf
+from .utils import dibujar_multi_linea, ajustar_texto_pdf, obtener_valores_de_opciones
 
 
 class ExportablePDFMixin:
@@ -454,6 +454,23 @@ class ItemPlanEvaluacion(models.Model):
     class Meta:
         db_table = 'items_plan_de_evaluacion'
         ordering = ['id']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(peso__in=obtener_valores_de_opciones(OPCIONES_PESO_EVALUACION)),
+                name="validar_peso",
+                violation_error_message=f"Los pesos de evaluación válidos son {OPCIONES_PESO_EVALUACION}"
+            ),
+            models.CheckConstraint(
+                check=models.Q(instrumento_evaluacion__in=obtener_valores_de_opciones(OPCIONES_INSTRUMENTOS_EVALUACION)),
+                name="validar_instrumento_evaluacion",
+                violation_error_message=f"Los instrumentos de evaluación válidos son {OPCIONES_INSTRUMENTOS_EVALUACION}"
+            ),
+            models.CheckConstraint(
+                check=models.Q(tipo_evaluacion__in=obtener_valores_de_opciones(OPCIONES_TIPO_EVALUACION)),
+                name="validar_tipo_evaluacion",
+                violation_error_message=f"Los tipos de evaluación válidos son {OPCIONES_TIPO_EVALUACION}"
+            )
+        ]
 
     def __str__(self):
         return f"{self.tipo_evaluacion}-{self.instrumento_evaluacion} {self.peso}% ({self.plan_evaluacion.nombre})"
@@ -469,6 +486,7 @@ class ItemPlanEvaluacion(models.Model):
         objetivo.save()
         return objetivo
 
+MENSAJE_ERROR_DURACION_HORAS = "La duración en horas de un objetivo debe ser de mínimo 2 y máximo 9."
 
 class ObjetivoPlanAprendizaje(models.Model):
     """Modelo de objetivos de plan de aprendizaje."""
@@ -480,8 +498,8 @@ class ObjetivoPlanAprendizaje(models.Model):
     estrategia_didactica = models.CharField(max_length=4, choices=OPCIONES_ESTRATEGIAS_DIDACTICAS, default='CL')
     duracion_horas = models.SmallIntegerField(
         validators=[
-            MinValueValidator(2, "Las horas de duración no pueden ser menores a 2."),
-            MaxValueValidator(9, "Las horas de duración no pueden ser mayores a 9.")
+            MinValueValidator(2, MENSAJE_ERROR_DURACION_HORAS),
+            MaxValueValidator(9, MENSAJE_ERROR_DURACION_HORAS)
         ]
     )
     evaluacion_asociada = models.ForeignKey(
@@ -491,6 +509,23 @@ class ObjetivoPlanAprendizaje(models.Model):
     class Meta:
         db_table = 'objetivos_plan_de_aprendizaje'
         ordering = ['id']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(duracion_horas__gte=2),
+                name="duracion_horas_mayor_que",
+                violation_error_message=MENSAJE_ERROR_DURACION_HORAS
+            ),
+            models.CheckConstraint(
+                check=models.Q(duracion_horas__lte=9),
+                name="duracion_horas_menor_que",
+                violation_error_message=MENSAJE_ERROR_DURACION_HORAS
+            ),
+            models.CheckConstraint(
+                check=models.Q(estrategia_didactica__in=obtener_valores_de_opciones(OPCIONES_ESTRATEGIAS_DIDACTICAS)),
+                name="validar_estrategia_didactica",
+                violation_error_message=f"Los valores válidos para la estrategia didáctica son {OPCIONES_ESTRATEGIAS_DIDACTICAS}"
+            )
+        ]
 
     def __str__(self):
         return f"{self.plan_aprendizaje.codigo_grupo} - {self.titulo}"

@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from autenticacion_docente.models import Docente
-from django.core.validators import RegexValidator
+from autenticacion_docente.models import Docente, NUMERO_MINIMO_CEDULA, NUMERO_MAXIMO_CEDULA, MENSAJE_CEDULA_INVALIDA
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class SerializadorInicioSesion(serializers.Serializer):
@@ -9,27 +9,17 @@ class SerializadorInicioSesion(serializers.Serializer):
 
     Atributos:
         cedula (serializers.CharField): Campo para la cédula del docente.
-            - max_length: 20 caracteres.
-            - validators: Utiliza RegexValidator para asegurar que la cédula
-              tenga el formato de una cédula venezolana (Ej: V-12345678).
-            - error_messages: Define un mensaje de error específico para la
-              validación de la cédula.
 
         docente (Docente | None): Atributo para almacenar la instancia del
             Docente recuperada durante la validación. Inicialmente es None.
     """
-    cedula = serializers.CharField(
-        max_length=20,
+    cedula = serializers.IntegerField(
         validators=[
-            RegexValidator(
-                regex=r"^[V]-\d{7,8}$",
-                message="Ingrese una cédula venezolana válida (Ej: V-12345678)",
-                code="cedula_invalida"
-            )
+            MinValueValidator(NUMERO_MINIMO_CEDULA, MENSAJE_CEDULA_INVALIDA),
+            MaxValueValidator(NUMERO_MAXIMO_CEDULA, MENSAJE_CEDULA_INVALIDA)
         ],
         error_messages={
-            'blank': 'La cédula es requerida.',
-            'max_length': 'La cédula no puede tener más de 20 caracteres.',
+            'blank': 'La cédula es requerida.'
         }
     )
 
